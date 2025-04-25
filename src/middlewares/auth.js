@@ -1,11 +1,21 @@
-const userAuth = (req, res, next) => {
-  console.log("User authentication middleware called");
-  const token = "xyz";
-  const isAuthenticated = token === "xyz"; // Simulate token verification
-  if (isAuthenticated) {
-    next(); // User is authenticated, proceed to the next middleware or route handler
-  } else {
-    res.status(401).json({ message: "Unauthorized Request" }); // User is not authenticated, send an error response
+const jwt = require("jsonwebtoken");
+const { User } = require("../models/user");
+
+const userAuth = async (req, res, next) => {
+  try {
+    const { token } = req.cookies;
+    if (!token) {
+      throw new Error("Please login to get profile details.");
+    }
+    const decodedData = await jwt.verify(token, "DevTinder$123");
+    const { _id } = decodedData;
+    const user = await User.findById(_id);
+    if (user) {
+      req.user = user;
+    }
+    next();
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
   }
 };
 
